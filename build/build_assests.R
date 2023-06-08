@@ -117,6 +117,9 @@ build_site_yaml <- function() {
       site_yaml
     )
   }
+  site_yaml <- gsub(
+    "/'", "/", site_yaml
+  )
   writeLines(site_yaml, "build/mkdocs/mkdocs.yml", "")
 }
 
