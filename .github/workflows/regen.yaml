@@ -1,0 +1,65 @@
+name: Regenerate Paws Website
+
+on:
+  schedule:
+    # At 12:00, on day 10 of the month, every 4 months
+    # Giving 10 days for paws regen to be approved
+    - cron: "0 12 10 */4 *"
+  workflow_dispatch:
+    inputs:
+      text_to_print:
+        description: "Manual re-build"
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    name: regen-site
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install R
+        uses: r-lib/actions/setup-r@v2
+
+      - uses: r-lib/actions/setup-pandoc@v2
+        with:
+          pandoc-version: "2.17.1"
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev libgit2-dev
+          sudo apt-get install -y libharfbuzz-dev libfribidi-dev
+    
+      - name: Get requirements
+        run: make requirements
+
+      - name: Update Paws Submodule
+        run: |
+          make update-deps
+
+      - name: Get Paws requirements
+        run: |
+          remotes::install_deps('vendor/paws/paws.common', dependencies = TRUE)
+          remotes::install_local('vendor/paws/paws.common', force = TRUE)
+        shell: Rscript {0}
+
+      - name: Regen Paws Site
+        run: |
+          make regen-site
+
+      # Commit all changed files back to the repository
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "Regenerate Paws Website"
