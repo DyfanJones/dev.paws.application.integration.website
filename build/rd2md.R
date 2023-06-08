@@ -23,8 +23,8 @@ log_info <- function(msg) {
 
 build_long_rd <- function(long_doc = "vendor/paws/paws") {
   suppressMessages({
-    roxygen2::update_collate(long_doc)
-    roxygen2::roxygenize(long_doc, roclets = c("rd"))
+    roxygen2::update_collate(fs::path_abs(long_doc))
+    roxygen2::roxygenize(fs::path_abs(long_doc), roclets = c("rd"))
   })
 }
 
@@ -34,7 +34,7 @@ fs::dir_create(c(md_dir, temp_html_dir), recurse = TRUE)
 log_info("Build Rd docs")
 
 # create Rd docs
-# build_long_rd()
+build_long_rd()
 
 log_info("Converting Rd to Markdown")
 
@@ -44,8 +44,8 @@ files <- basename(fs::dir_ls(file.path(dir, pkg, "man")))
 files <- files[files != "paws-package.Rd"]
 
 html_files <- fs::path(temp_html_dir, gsub("\\.Rd", "\\.html", files))
-md_files <- fs::path(getwd(), md_dir, gsub("\\.Rd", "\\.md", files))
-rd_files <- file.path("vendor/paws", "paws", "man", files)
+md_files <- fs::path_abs(file.path(md_dir, gsub("\\.Rd", "\\.md", files)))
+rd_files <- fs::path_abs(file.path("vendor/paws", "paws", "man", files))
 
 col_width <- c(
   "<colgroup>",
